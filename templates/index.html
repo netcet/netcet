@@ -49,8 +49,9 @@
       let uploadForm = document.getElementById("uploadForm");
 
       dropZone.addEventListener("click", function () {
-        fileInput.click();
-      });
+        if (e.target === dropZone)
+            fileInput.click();
+        });
 
       fileInput.addEventListener("change", function () {
         if (fileInput.files.length > 0) {
@@ -59,6 +60,7 @@
       });
 
       dropZone.addEventListener("dragover", function (e) {
+        e.preventDefault();
         this.classList.add("dragover");
       });
 
