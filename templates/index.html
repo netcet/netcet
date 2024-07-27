@@ -6,7 +6,6 @@
       body {
         height: 100vh;
         display: flex;
-
         align-items: center;
         justify-content: center;
         text-align: center;
@@ -27,36 +26,83 @@
       .drop-zone.dragover {
         background-color: #f0f0f0;
       }
+
+      #progress-bar {
+        width: 100%;
+        height: 10px;
+        background-color: #ddd;
+        border-radius: 5px;
+        overflow: hidden;
+        margin-top: 20px;
+      }
+
+      #progress-fill {
+        width: 0%;
+        height: 100%;
+        background-color: #4CAF50;
+        border-radius: 5px;
+      }
     </style>
   </head>
   <body>
     <div id="dropZone" class="drop-zone">
       <h1>rmbg</h1>
-      <form
-        id="uploadForm"
-        action="/"
-        method="post"
-        enctype="multipart/form-data"
-      >
+      <form id="uploadForm" action="/" method="post" enctype="multipart/form-data">
         <input id="fileInput" type="file" name="file" />
         <input type="submit" value="rm" />
       </form>
+      <div id="progress-bar">
+        <div id="progress-fill"></div>
+      </div>
     </div>
 
     <script>
       let dropZone = document.getElementById("dropZone");
       let fileInput = document.getElementById("fileInput");
       let uploadForm = document.getElementById("uploadForm");
+      let progressBar = document.getElementById("progress-bar");
+      let progressFill = document.getElementById("progress-fill");
 
       dropZone.addEventListener("click", function () {
-        if (e.target === dropZone)
-            fileInput.click();
-        });
+        if (e.target === dropZone) fileInput.click();
+      });
 
       fileInput.addEventListener("change", function () {
         if (fileInput.files.length > 0) {
           uploadForm.submit();
+          progressBar.style.display = "block"; // Show progress bar on submit
         }
+      });
+
+      uploadForm.addEventListener("submit", function (e) {
+        e.preventDefault(); // Prevent default form submission
+
+        let xhr = new XMLHttpRequest();
+        xhr.upload.addEventListener("progress", function (event) {
+          if (event.lengthComputable) {
+            let progress = (event.loaded / event.total) * 100;
+            progressFill.style.width = progress + "%";
+          }
+        });
+
+        xhr.onload = function () {
+          if (xhr.status === 200) {
+            // Handle successful response (download the file)
+            let blob = new Blob([xhr.response], { type: "image/png" });
+            let url = window.URL.createObjectURL(blob);
+            let link = document.createElement("a");
+            link.href = url;
+            link.download = "_rmbg.png";
+            link.click();
+            progressFill.style.width = "100%"; // Set progress to complete
+          } else {
+            // Handle errors
+          }
+        };
+
+        xhr.open("POST", "/");
+        let formData = new FormData(uploadForm);
+        xhr.send(formData);
       });
 
       dropZone.addEventListener("dragover", function (e) {
@@ -78,5 +124,4 @@
         uploadForm.submit();
       });
     </script>
-  </body>
-</html>
+  </
