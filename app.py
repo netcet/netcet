@@ -1,20 +1,27 @@
-import streamlit as st
-import PIL.Image
-from io import BytesIO
+from flask import Flask, render_template, request, send_file
 from rembg import remove
+from PIL import Image
+from io import BytesIO
 
-def main():
-    uploaded_file = st.file_uploader("Choose an image file")
-    if uploaded_file is not None:
-        output = None
-        image = PIL.Image.open(uploaded_file)
-        st.image(image, caption='Uploaded Image.', use_column_width=True)
-        if st.button('Remove Background'):
-            output = remove(image)
-            st.image(output, caption='Output Image.', use_column_width=True)
-        if st.button('Save Output Image'):
-            output.save('out.png')
-            st.write('Output image saved as out.png')
+app = Flask(__name__)
+
+@app.route('/', methods=['GET', 'POST'])
+def upload_file():
+    if request.method == 'POST':
+        if 'file' not in request.files:
+            return 'No file uploaded', 400
+        file = request.files['file']
+        if file.filename == '':
+            return 'No file selected', 400
+        if file:
+            input_image = Image.open(file.stream)
+            output_image = remove(input_image, post_process_mask=True)
+            img_io = BytesIO()
+            output_image.save(img_io, 'PNG')
+            img_io.seek(0)
+            # return send_file(img_io, mimetype='image/png')  # Change download in separatre browser tab
+            return send_file(img_io, mimetype='image/png', as_attachment=True, download_name='_rmbg.png')
+    return render_template('index.html')
 
 if __name__ == '__main__':
-    main()
+    app.run(host='0.0.0.0', debug=True, port=5100)
